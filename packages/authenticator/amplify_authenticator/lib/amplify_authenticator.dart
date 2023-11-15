@@ -315,6 +315,7 @@ class Authenticator extends StatefulWidget {
     this.padding = const EdgeInsets.all(32),
     this.dialCodeOptions = const DialCodeOptions(),
     this.totpOptions,
+    required this.scaffoldMessengerKey,
     @visibleForTesting this.authBlocOverride,
   }) :
         // ignore: prefer_asserts_with_message
@@ -354,6 +355,8 @@ class Authenticator extends StatefulWidget {
         }
         return _AuthenticatorBody(child: child);
       };
+
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
   // Padding around each authenticator view
   final EdgeInsets padding;
@@ -500,7 +503,6 @@ class Authenticator extends StatefulWidget {
 }
 
 class _AuthenticatorState extends State<Authenticator> {
-  static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   static final _logger = AmplifyLogger().createChild('Authenticator');
 
   final AuthService _authService = AmplifyAuthService();
@@ -509,6 +511,7 @@ class _AuthenticatorState extends State<Authenticator> {
   late final StreamSubscription<AuthenticatorException> _exceptionSub;
   late final StreamSubscription<MessageResolverKey> _infoSub;
   late final StreamSubscription<AuthState> _successSub;
+  late final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
   AmplifyConfig? _config;
   late List<String> _missingConfigValues;
@@ -517,6 +520,7 @@ class _AuthenticatorState extends State<Authenticator> {
   @override
   void initState() {
     super.initState();
+    scaffoldMessengerKey = widget.scaffoldMessengerKey;
     // ignore: invalid_use_of_visible_for_testing_member
     _stateMachineBloc = widget.authBlocOverride ??
         (StateMachineBloc(
@@ -827,14 +831,7 @@ class _AuthenticatorBody extends StatelessWidget {
           onPopPage: (_, dynamic __) => true,
           pages: [
             MaterialPage<void>(
-              child: ScaffoldMessenger(
-                key: _AuthenticatorState.scaffoldMessengerKey,
-                child: Scaffold(
-                  body: SizedBox.expand(
-                    child: child,
-                  ),
-                ),
-              ),
+              child: child,
             ),
           ],
         );
@@ -866,16 +863,9 @@ class AuthenticatedView extends StatelessWidget {
           if (state is AuthenticatedState) {
             return child;
           }
-          return ScaffoldMessenger(
-            key: _AuthenticatorState.scaffoldMessengerKey,
-            child: Scaffold(
-              body: SizedBox.expand(
-                child: child is AuthenticatorScreen
+          return child is AuthenticatorScreen
                     ? SingleChildScrollView(child: child)
-                    : child,
-              ),
-            ),
-          );
+                    : child;
         },
       ),
     );
